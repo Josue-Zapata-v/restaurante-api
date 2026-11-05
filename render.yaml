@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: restaurante-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/estado
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__RestauranteDb
+        sync: false
+      - key: Cors__AllowedOrigin
+        sync: false

@@ -1,0 +1,106 @@
+# REST Client (VS Code). Cambiar por la URL PUBLICA antes de tomar evidencias.
+# Ejecutar en orden. Elegir un numero de mesa libre (aqui 180).
+@baseUrl = https://TU-API.onrender.com
+@mesaId = {{crearMesa.response.body.$.id}}
+@reservaId = {{crearReserva.response.body.$.id}}
+
+### Estado - 200
+GET {{baseUrl}}/api/estado
+
+### Listar mesas - 200
+GET {{baseUrl}}/api/mesas
+
+### Crear mesa - 201, revisar Location
+# @name crearMesa
+POST {{baseUrl}}/api/mesas
+Content-Type: application/json
+
+{"numero":180,"capacidad":4,"ubicacion":"Terraza de pruebas"}
+
+### Mesa por ID - 200
+GET {{baseUrl}}/api/mesas/{{mesaId}}
+
+### Numero duplicado - 409
+POST {{baseUrl}}/api/mesas
+Content-Type: application/json
+
+{"numero":180,"capacidad":4,"ubicacion":"Otra ubicacion"}
+
+### Campo requerido - 400 automatico
+POST {{baseUrl}}/api/mesas
+Content-Type: application/json
+
+{"numero":181,"capacidad":4}
+
+### Range - 400 automatico
+POST {{baseUrl}}/api/mesas
+Content-Type: application/json
+
+{"numero":181,"capacidad":0,"ubicacion":"Prueba"}
+
+### Modificar mesa - 204
+PUT {{baseUrl}}/api/mesas/{{mesaId}}
+Content-Type: application/json
+
+{"id":{{mesaId}},"numero":180,"capacidad":6,"ubicacion":"Terraza actualizada"}
+
+### Id distinto - 400
+PUT {{baseUrl}}/api/mesas/{{mesaId}}
+Content-Type: application/json
+
+{"id":2147483647,"numero":180,"capacidad":6,"ubicacion":"Prueba"}
+
+### Crear reserva, solo FK - 201, revisar Location
+# @name crearReserva
+POST {{baseUrl}}/api/reservas
+Content-Type: application/json
+
+{"nombreCliente":"Cliente de prueba","telefono":"999123456","fechaHora":"2030-12-10T13:00:00","cantidadPersonas":4,"mesaId":{{mesaId}}}
+
+### Listar reservas - 200
+GET {{baseUrl}}/api/reservas
+
+### Filtrar reservas - 200
+GET {{baseUrl}}/api/reservas?mesaId={{mesaId}}&desde=2030-12-10&hasta=2030-12-10T23:59:59
+
+### Reserva por ID, incluye mesa - 200
+GET {{baseUrl}}/api/reservas/{{reservaId}}
+
+### Ruta anidada - 200
+GET {{baseUrl}}/api/mesas/{{mesaId}}/reservas
+
+### Mesa con reservas - 409
+DELETE {{baseUrl}}/api/mesas/{{mesaId}}
+
+### Reducir capacidad incompatible - 409
+PUT {{baseUrl}}/api/mesas/{{mesaId}}
+Content-Type: application/json
+
+{"id":{{mesaId}},"numero":180,"capacidad":2,"ubicacion":"Prueba"}
+
+### Reserva supera capacidad - 409
+POST {{baseUrl}}/api/reservas
+Content-Type: application/json
+
+{"nombreCliente":"Cliente de prueba","telefono":"999123456","fechaHora":"2030-12-10T13:00:00","cantidadPersonas":7,"mesaId":{{mesaId}}}
+
+### FK inexistente - 400
+POST {{baseUrl}}/api/reservas
+Content-Type: application/json
+
+{"nombreCliente":"Cliente de prueba","telefono":"999123456","fechaHora":"2030-12-10T13:00:00","cantidadPersonas":4,"mesaId":2147483647}
+
+### Modificar reserva - 204
+PUT {{baseUrl}}/api/reservas/{{reservaId}}
+Content-Type: application/json
+
+{"id":{{reservaId}},"nombreCliente":"Cliente actualizado","telefono":"999123456","fechaHora":"2030-12-11T14:00:00","cantidadPersonas":5,"mesaId":{{mesaId}}}
+
+### Recurso inexistente - 404
+GET {{baseUrl}}/api/reservas/2147483647
+
+### Eliminar reserva temporal - 204
+DELETE {{baseUrl}}/api/reservas/{{reservaId}}
+
+### Eliminar mesa temporal - 204
+DELETE {{baseUrl}}/api/mesas/{{mesaId}}
