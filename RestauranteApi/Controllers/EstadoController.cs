@@ -18,7 +18,7 @@ public class EstadoController(RestauranteContext context) : ControllerBase
         {
             await context.Mesas.AsNoTracking().AnyAsync(ct);
             await context.Reservas.AsNoTracking().AnyAsync(ct);
-            return Ok(new { estado = "Disponible", baseDeDatos = "SQL Server" });
+            return Ok(new { estado = "Disponible", baseDeDatos = "PostgreSQL" });
         }
         catch (Exception) when (!ct.IsCancellationRequested)
         {

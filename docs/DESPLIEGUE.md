@@ -1,55 +1,62 @@
-# Publicación en la nube
+# Publicación — Render + Neon
 
-## Elección de proveedores
+## Elección y alternativas
 
-**Render Free para la API, con Docker**, permite usar una imagen oficial ASP.NET Core 10 sin depender de un runtime nativo del proveedor. Incluye HTTPS y una URL pública. El servicio gratuito se suspende tras 15 minutos sin tráfico y puede tardar alrededor de un minuto en reactivarse; hay límites mensuales de uso. [Render Free](https://render.com/docs/free), [servicios web](https://render.com/docs/web-services).
+**Render Free para la API mediante Docker** construye la imagen oficial ASP.NET Core 10 desde el Dockerfile del repositorio. Proporciona HTTPS y una URL pública. El servicio se suspende tras 15 minutos sin tráfico y el primer acceso puede tardar alrededor de un minuto. Tiene límites mensuales de uso. [Documentación](https://render.com/docs/free).
 
-**Azure SQL Database con su oferta gratuita** mantiene el proveedor de SQL Server utilizado en clase, el script T-SQL y `UseSqlServer`. La oferta documentada incluye 100 000 vCore-segundos y 32 GB de datos por base al mes, condicionada a una suscripción compatible. Seleccionar la opción de pausa al alcanzar el límite gratuito, no la continuidad con cargos. [Oferta oficial](https://learn.microsoft.com/en-us/azure/azure-sql/database/free-offer?view=azuresql).
+**Neon Free para PostgreSQL** ofrece una base administrada sin tarjeta para el plan gratuito, con límites de cómputo y almacenamiento y suspensión por inactividad. Consultar los límites vigentes al crear la cuenta. Es adecuado para este proyecto académico y permite conservar la base fuera del contenedor de la API. [Planes](https://neon.com/pricing).
 
-Alternativas investigadas: Koyeb ofrece una instancia gratuita de 512 MB con suspensión por inactividad ([documentación](https://www.koyeb.com/docs/reference/instances)). Neon ofrece PostgreSQL gratuito ([planes](https://neon.com/pricing)), pero requeriría cambiar de proveedor y adaptar el script. Para este proyecto se eligió mantener **SQL Server**. No se requiere instalar PostgreSQL ni usar Neon.
+Alternativas investigadas: Koyeb ofrece una instancia gratuita con recursos limitados y suspensión ([documentación](https://www.koyeb.com/docs/reference/instances)); la base PostgreSQL gratuita de Render expira a los 30 días ([limitaciones](https://render.com/docs/free)). Se eligió Neon para la persistencia de los datos.
 
-Consultar las condiciones vigentes al crear los recursos; una prueba de crédito temporal no equivale a la oferta gratuita seleccionada. No se crea ningún recurso de pago como parte de este repositorio.
+El proveedor EF Core utilizado es `Npgsql.EntityFrameworkCore.PostgreSQL` con `UseNpgsql`. El script usa sintaxis PostgreSQL, columnas identity y `timestamp without time zone` para preservar la hora local del restaurante. [Proveedor Npgsql y Scaffold](https://www.npgsql.org/efcore/).
 
-## 1. Repositorio GitHub
+## 1. Crear la base en Neon
 
-Crear un repositorio y subir la carpeta raíz, que incluye `Dockerfile`, `render.yaml`, `RestauranteApi` y `sql`. Revisar primero que no existan secretos versionados. Los archivos `appsettings.json` solo contienen configuración pública; la conexión se obtiene de secretos de usuario o variables de entorno.
+1. Entrar en https://console.neon.tech y registrarse, por ejemplo con GitHub.
+2. Elegir **Free** y crear un proyecto `restaurante-api`, con PostgreSQL 17 o posterior.
+3. Seleccionar una región disponible cercana a la que se usará en Render.
+4. En **SQL Editor**, seleccionar la base correspondiente, pegar todo `sql/restaurante.sql` y ejecutarlo una sola vez.
+5. Verificar:
 
-## 2. Azure SQL
+```sql
+SELECT COUNT(*) FROM public."Mesas";    -- 4
+SELECT COUNT(*) FROM public."Reservas"; -- 3
+```
 
-1. Crear una base usando explícitamente la oferta gratuita compatible con tu suscripción y la opción **pausar hasta el siguiente mes al alcanzar el límite**.
-2. Crear o elegir un servidor lógico SQL y sus credenciales, sin copiarlas al repositorio ni al chat.
-3. Habilitar acceso público con reglas de firewall restringidas. Agregar temporalmente la IP del equipo para ejecutar el script.
-4. Abrir la base correcta con una herramienta SQL y ejecutar `sql/restaurante.sql` una vez.
-5. Verificar `SELECT COUNT(*) FROM dbo.Mesas` (4) y `SELECT COUNT(*) FROM dbo.Reservas` (3).
-6. Obtener la conexión ADO.NET y mantener `Encrypt=True;TrustServerCertificate=False`.
+6. En **Connect**, obtener host, base, usuario y contraseña para la aplicación. No enviarlos al chat ni guardarlos en el repositorio.
 
-Para conectar la API desde Render se necesita autenticación SQL u otro mecanismo compatible configurado expresamente. La autenticación integrada de Windows de la conexión local **no sirve para el contenedor en Render**.
+## 2. Configurar conexión Npgsql
 
-## 3. Render
+La variable `ConnectionStrings__RestauranteDb` espera el formato ADO.NET/Npgsql de pares clave=valor, no una URL `postgresql://...`. En la ventana Connect, elegir C#/.NET si está disponible o trasladar por separado Host, Database, Username y Password a una conexión Npgsql con TLS verificado (`SSL Mode=VerifyFull`). El host debe ser exactamente el entregado por Neon; no agregar `https://` ni rutas. Si la contraseña contiene separadores, usar NpgsqlConnectionStringBuilder o el valor correctamente entrecomillado.
 
-1. Crear un Web Service desde el repositorio (o un Blueprint usando `render.yaml`).
-2. Seleccionar runtime **Docker**, directorio raíz del repositorio y plan **Free**.
-3. Configurar variables de entorno en el panel:
+Para Scaffold es preferible la conexión directa (sin `-pooler`). La API de este proyecto también puede utilizar esa conexión directa: no depende de un pooler externo. [Conexiones de Neon](https://neon.com/docs/connect/connect-from-any-app), [parámetros de Npgsql](https://www.npgsql.org/doc/connection-string-parameters.html).
+
+## 3. Publicar la API en Render
+
+1. Crear un **Web Service** vinculado a `Josue-Zapata-v/restaurante-api`, rama `main`.
+2. Runtime **Docker**, directorio raíz del repositorio y Dockerfile `./Dockerfile`.
+3. Elegir explícitamente **Free**.
+4. Configurar en el panel:
 
 | Clave | Valor |
 |---|---|
-| `ConnectionStrings__RestauranteDb` | Cadena ADO.NET de Azure SQL con su contraseña, solo en Render |
-| `Cors__AllowedOrigin` | Origen concreto, por ejemplo `http://localhost:5500` para un cliente local |
+| `ConnectionStrings__RestauranteDb` | Conexión Npgsql de Neon, solo en el panel de secretos |
+| `Cors__AllowedOrigin` | Origen concreto, por ejemplo `http://localhost:5500` |
 | `ASPNETCORE_ENVIRONMENT` | `Production` |
 
-4. El Dockerfile escucha HTTP en el puerto 8080 y Render proporciona HTTPS externo. La redirección HTTPS local solo se habilita en Development para evitar problemas detrás del proxy.
-5. En la configuración de Render consultar los rangos de **Outbound IP addresses** del servicio. Autorizar esos rangos en el firewall de Azure SQL. Evitar abrir la base a todo internet. Retirar la regla temporal del equipo si ya no se necesita.
-6. Usar `/api/estado` como comprobación de salud. Devuelve 503 si la base no está accesible o falta ejecutar el script.
-7. Comprobar `https://TU-API.onrender.com/swagger` y `/openapi/v1.json`.
+También puede usarse el Blueprint `render.yaml`; pide las variables secretas sin guardarlas en código. El contenedor escucha en 8080 y Render proporciona HTTPS externo. `/api/estado` es la comprobación de salud: 503 indica falta de conexión o de tablas; 200 confirma acceso al esquema.
 
-## 4. Validar la entrega
+## 4. Verificar y entregar
 
-Ejecutar `pruebas/Probar-Api.ps1` contra la URL HTTPS pública y realizar las capturas manuales. Las pruebas locales no reemplazan este paso. Comprobar que los cambios persisten en Azure SQL. Guardar los enlaces reales, los proveedores y las limitaciones observadas en `docs/ENTREGA.md`.
+1. Abrir `https://TU-API.onrender.com/swagger` y `/openapi/v1.json`.
+2. Verificar que `/api/estado` informa `PostgreSQL`.
+3. Ejecutar:
 
-## Observaciones técnicas
+```powershell
+powershell -NoProfile -File pruebas/Probar-Api.ps1 -BaseUrl 'https://TU-API.onrender.com' -OutputPath 'evidencias/nube.json'
+```
 
-- Se usa SQL Server tanto en desarrollo como en la nube; no se realiza cambio de proveedor de EF Core.
-- El modelo es Database First: no se invoca `EnsureCreated` ni `Migrate` al arrancar.
-- OpenAPI y SwaggerUI se habilitan también en Production. [Microsoft: OpenAPI en ASP.NET Core 10](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/aspnetcore-openapi?view=aspnetcore-10.0).
-- El primer acceso puede demorarse por la suspensión de la API o la pausa de la base gratuita. Esperar la reactivación antes de repetir la matriz.
-- Ningún enlace de despliegue ni captura de nube se da por completado antes de verificarse en el servicio real.
+4. Repetir las operaciones en Swagger para las capturas exigidas y verificar que los cambios persisten en Neon.
+5. Completar `docs/ENTREGA.md` con la URL real, evidencias y observaciones.
+
+El primer acceso puede tardar por el arranque de la API y la reactivación de la base. La publicación y las capturas de nube solo se consideran completas después de comprobarse en la URL real.

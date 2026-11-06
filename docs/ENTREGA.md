@@ -8,11 +8,11 @@ Reglas con respuesta 409: número de mesa único; prohibición de eliminar mesas
 
 ## Enlaces reales (completar después de publicar)
 
-- Repositorio: **PENDIENTE**.
+- Repositorio: https://github.com/Josue-Zapata-v/restaurante-api
 - Swagger público: **PENDIENTE**.
 - Hosting elegido: **Render Free**.
-- Base de datos elegida: **Azure SQL Database, oferta gratuita**.
-- Ejecución del script en Azure SQL: **PENDIENTE**.
+- Base de datos elegida: **Neon Free (PostgreSQL)**.
+- Ejecución del script en Neon: **PENDIENTE**.
 - Pruebas y capturas contra la API pública: **PENDIENTES**.
 
 ## Matriz de capturas
@@ -51,13 +51,13 @@ Cuando una fila agrupa varias solicitudes, tomar una captura por solicitud. Guar
 ## Observaciones
 
 - La API implementa controladores async con acceso directo al DbContext y consultas LINQ.
-- El modelo se genera desde una base SQL Server creada por script, luego se incorporan validaciones y ajustes de serialización.
+- El modelo se genera desde una base PostgreSQL creada por script, luego se incorporan validaciones y ajustes de serialización.
 - Las claves foráneas y restricciones únicas en la base complementan las comprobaciones de los controladores.
 - Las fechas corresponden a la hora local de Lima. No se implementa detección de solapamiento de reservas.
 - Anotar aquí las limitaciones observadas de los servicios gratuitos durante las pruebas públicas: **PENDIENTE**.
 
 ## Conclusiones técnicas
 
-La relación 1:N permite administrar las reservas sin duplicar los datos de las mesas. Las Data Annotations y los códigos HTTP expresan los errores de validación y los conflictos de negocio de forma consistente. Se mantiene SQL Server en ambos entornos mediante el proveedor oficial de EF Core. Swagger permite explorar el contrato y realizar pruebas sin construir un frontend.
+La relación 1:N permite administrar las reservas sin duplicar los datos de las mesas. Las Data Annotations y los códigos HTTP expresan los errores de validación y los conflictos de negocio de forma consistente. Se utiliza PostgreSQL mediante el proveedor Npgsql de EF Core y el método UseNpgsql. El script usa columnas identity, texto varchar, claves foráneas sin cascada y timestamp sin zona horaria. La elección del proveedor permite usar Neon Free para la persistencia en la nube. Swagger permite explorar el contrato y realizar pruebas sin construir un frontend.
 
-La conclusión sobre el funcionamiento en internet se completará cuando se verifiquen la API publicada y la persistencia en Azure SQL; no debe afirmarse como realizada antes de esa comprobación.
+La conclusión sobre el funcionamiento en internet se completará cuando se verifiquen la API publicada y la persistencia en Neon; no debe afirmarse como realizada antes de esa comprobación.

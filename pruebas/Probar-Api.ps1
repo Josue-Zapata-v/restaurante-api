@@ -59,7 +59,8 @@ function Invoke-Case {
 }
 
 try {
-    $null = Invoke-Case 'API y SQL Server disponibles' GET '/api/estado' 200
+    $estado = Invoke-Case 'API y PostgreSQL disponibles' GET '/api/estado' 200
+    if ($estado.Data.baseDeDatos -ne 'PostgreSQL') { throw 'La API no esta conectada al proveedor PostgreSQL esperado.' }
     $null = Invoke-Case 'Swagger en el entorno publicado' GET '/swagger/index.html' 200
     $openapi = Invoke-Case 'Documento OpenAPI' GET '/openapi/v1.json' 200
     if (!$openapi.Data.paths.'/api/Mesas' -and !$openapi.Data.paths.'/api/mesas') {

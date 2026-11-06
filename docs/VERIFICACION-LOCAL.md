@@ -1,20 +1,19 @@
-# Verificación local realizada
+# Verificación local con PostgreSQL
 
-Esta comprobación sirve para desarrollo. **No acredita el despliegue ni sustituye las capturas exigidas en la nube.**
+Esta comprobación sirve para desarrollo. **No acredita la publicación ni sustituye las capturas exigidas en la nube.**
 
-- Fecha local: 4 de noviembre de 2026 (America/Lima).
-- Motor verificado: SQL Server 2025 Express, instancia local SQLEXPRESS.
-- Base creada para esta actividad: `RestauranteSemana12Db`.
-- Script ejecutado: `sql/restaurante.sql`, con 4 mesas y 3 reservas iniciales.
-- Modelo generado realmente con `dotnet ef dbcontext scaffold`, proveedor `Microsoft.EntityFrameworkCore.SqlServer`, `--data-annotations` y `--no-onconfiguring`.
-- Entidades ajustadas después de la generación: validaciones, `Mesa?` y `[JsonIgnore]`.
-- Build: correcto, 0 errores y 0 advertencias.
+El procedimiento es ejecutar `scripts/Preparar-Local.ps1`, generar una copia del modelo con Scaffold, compilar, iniciar la API y ejecutar `pruebas/Probar-Api.ps1`. El reporte se escribe en `evidencias/local.json`, ignorado por Git.
+
+## Resultados del 5 de noviembre de 2026
+
+- PostgreSQL 17 ejecutándose en Docker, con volumen persistente y puerto enlazado únicamente a localhost.
+- Script PostgreSQL ejecutado correctamente en una base vacía: 4 mesas y 3 reservas iniciales.
+- Scaffold ejecutado realmente con `Npgsql.EntityFrameworkCore.PostgreSQL`; contexto generado aplicado y validaciones conservadas.
+- Compilación: correcta, **0 errores y 0 advertencias**.
 - Publicación Release con `dotnet publish`: correcta.
-- Matriz HTTP en desarrollo: **50 solicitudes verificadas**, incluidas 200, 201, 204, 400, 404 y 409. Reporte local: `evidencias/local.json` (no se versiona; puede regenerarse con el script de pruebas).
-- Verificación adicional con la compilación publicada ejecutada en **Production**: `/api/estado`, `/swagger/index.html` y `/openapi/v1.json` devolvieron 200.
-- CORS: el origen configurado `http://localhost:5500` fue autorizado; un origen ajeno no recibió cabecera de autorización.
-- Después de las pruebas, la base conserva las 4 mesas y 3 reservas originales. Los registros temporales se eliminaron.
+- Matriz HTTP: **50 solicitudes correctas**, con códigos 200, 201, 204, 400, 404 y 409. Incluye comprobación explícita del proveedor PostgreSQL, persistencia de los PUT, Location y reglas de negocio.
+- El reporte local anterior se reemplazó por el generado con PostgreSQL. Los registros temporales de pruebas se eliminaron.
+- La compilación publicada se inició en modo **Production**: estado, Swagger y OpenAPI devolvieron 200; el origen CORS configurado fue autorizado.
+- Se repitió el script de preparación local: conservó las 4 mesas y 3 reservas y no reinició los datos.
 
-Se retiró del proyecto el proveedor Npgsql utilizado en el borrador inicial. No se instaló un servidor PostgreSQL. La herramienta `dotnet-ef` se declara localmente en `.config/dotnet-tools.json`, sin exigir una instalación global. Los paquetes descargados a la caché compartida de NuGet no son dependencias activas del proyecto.
-
-Pendiente: repositorio remoto, base Azure SQL, publicación de Render, ejecución del script en la nube y pruebas/capturas sobre la URL pública.
+Pendiente externo: crear el proyecto Neon, ejecutar allí el script y publicar la API en Render para obtener las evidencias públicas.

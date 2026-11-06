@@ -21,7 +21,7 @@ public partial class RestauranteContext : DbContext
         modelBuilder.Entity<Reserva>(entity =>
         {
             entity.HasOne(d => d.Mesa).WithMany(p => p.Reservas)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("FK_Reservas_Mesas");
         });
 

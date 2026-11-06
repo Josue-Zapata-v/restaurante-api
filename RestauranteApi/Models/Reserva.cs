@@ -22,7 +22,7 @@ public partial class Reserva
     [StringLength(20)]
     public string Telefono { get; set; } = null!;
 
-    [Precision(0)]
+    [Column(TypeName = "timestamp(0) without time zone")]
     [Required]
     [Range(typeof(DateTime), "2000-01-01", "2100-12-31T23:59:59",
         ParseLimitsInInvariantCulture = true,

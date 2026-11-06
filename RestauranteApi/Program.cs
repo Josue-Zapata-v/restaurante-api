@@ -15,7 +15,7 @@ if (!Uri.TryCreate(allowedOrigin, UriKind.Absolute, out var origin)
     || !string.IsNullOrEmpty(origin.Fragment) || !string.IsNullOrEmpty(origin.UserInfo))
     throw new InvalidOperationException("Cors:AllowedOrigin debe ser un origen HTTP(S) concreto, sin ruta.");
 
-builder.Services.AddDbContext<RestauranteContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<RestauranteContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<RestauranteApi.Infrastructure.ApiExceptionHandler>();
