@@ -25,7 +25,7 @@ El script se ejecutó en Neon y se confirmaron inicialmente **4 mesas y 3 reserv
 
 Swagger utiliza el origen de la página mediante el servidor relativo `/` del documento OpenAPI. Se corrigió la generación de URLs detrás del proxy de Render y se verificó una solicitud desde Swagger con HTTPS y respuesta 200. Las cabeceras Location se generan con el origen HTTPS público proporcionado por Render.
 
-La **[guía de pruebas para el profesor](../pruebas/README.md)** documenta el CRUD y los seis códigos HTTP requeridos. Esta verificación de disponibilidad no afirma que se hayan archivado capturas de todos los casos; las capturas de evaluación se adjuntan al informe.
+La **[guía de pruebas](../pruebas/README.md)** documenta el CRUD y los seis códigos HTTP requeridos. Esta verificación de disponibilidad no afirma que se hayan archivado capturas de todos los casos; las capturas de evaluación se adjuntan al informe.
 
 ## Verificación local de desarrollo
 
