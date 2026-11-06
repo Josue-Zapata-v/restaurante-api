@@ -1,6 +1,6 @@
-# REST Client (VS Code). Cambiar por la URL PUBLICA antes de tomar evidencias.
+# REST Client (VS Code). Solicitudes contra la API publicada en Render.
 # Ejecutar en orden. Elegir un numero de mesa libre (aqui 180).
-@baseUrl = https://TU-API.onrender.com
+@baseUrl = https://restaurante-api-lohv.onrender.com
 @mesaId = {{crearMesa.response.body.$.id}}
 @reservaId = {{crearReserva.response.body.$.id}}
 

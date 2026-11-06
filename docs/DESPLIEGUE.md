@@ -1,64 +1,100 @@
-# Publicación — Render + Neon
+# Despliegue y mantenimiento — Render + Neon
 
-## Elección y alternativas
+## Servicios publicados
 
-**Render Free para la API mediante Docker** construye la imagen oficial ASP.NET Core 10 desde el Dockerfile del repositorio. Proporciona HTTPS y una URL pública. El servicio se suspende tras 15 minutos sin tráfico y el primer acceso puede tardar alrededor de un minuto. Tiene límites mensuales de uso. [Documentación](https://render.com/docs/free).
+| Recurso | Configuración o enlace |
+|---|---|
+| Swagger público | https://restaurante-api-lohv.onrender.com/swagger |
+| URL base de la API | `https://restaurante-api-lohv.onrender.com` |
+| Documento OpenAPI | https://restaurante-api-lohv.onrender.com/openapi/v1.json |
+| Estado de API y base | https://restaurante-api-lohv.onrender.com/api/Estado |
+| Repositorio y rama | https://github.com/Josue-Zapata-v/restaurante-api — `main` |
+| Hosting de la API | Render Free, servicio `restaurante-api`, runtime Docker. |
+| Base de datos | Neon Free, proyecto `restaurante-api`, rama `production`, base `neondb`. |
 
-**Neon Free para PostgreSQL** ofrece una base administrada sin tarjeta para el plan gratuito, con límites de cómputo y almacenamiento y suspensión por inactividad. Consultar los límites vigentes al crear la cuenta. Es adecuado para este proyecto académico y permite conservar la base fuera del contenedor de la API. [Planes](https://neon.com/pricing).
+La API y la base ya están desplegadas. Para probarlas, utilizar la **[guía del profesor](../pruebas/README.md)**. Las secciones siguientes documentan la configuración utilizada y sirven para mantenimiento o para reproducir el despliegue en un servicio nuevo.
 
-Alternativas investigadas: Koyeb ofrece una instancia gratuita con recursos limitados y suspensión ([documentación](https://www.koyeb.com/docs/reference/instances)); la base PostgreSQL gratuita de Render expira a los 30 días ([limitaciones](https://render.com/docs/free)). Se eligió Neon para la persistencia de los datos.
+## Elección de proveedores
 
-El proveedor EF Core utilizado es `Npgsql.EntityFrameworkCore.PostgreSQL` con `UseNpgsql`. El script usa sintaxis PostgreSQL, columnas identity y `timestamp without time zone` para preservar la hora local del restaurante. [Proveedor Npgsql y Scaffold](https://www.npgsql.org/efcore/).
+**Render Free** construye la imagen ASP.NET Core 10 desde el Dockerfile del repositorio y proporciona HTTPS. El plan gratuito tiene límites de uso y suspende el servicio tras periodos de inactividad; el primer acceso puede demorar mientras se reactiva. [Documentación de Render](https://render.com/docs/free).
 
-## 1. Crear la base en Neon
+**Neon Free** aloja PostgreSQL como servicio administrado y mantiene la persistencia fuera del contenedor de la API. El plan gratuito tiene límites de cómputo y almacenamiento. [Planes de Neon](https://neon.com/pricing).
 
-1. Entrar en https://console.neon.tech y registrarse, por ejemplo con GitHub.
-2. Elegir **Free** y crear un proyecto `restaurante-api`, con PostgreSQL 17 o posterior.
-3. Seleccionar una región disponible cercana a la que se usará en Render.
-4. En **SQL Editor**, seleccionar la base correspondiente, pegar todo `sql/restaurante.sql` y ejecutarlo una sola vez.
-5. Verificar:
+Alternativas investigadas: Koyeb dispone de una instancia gratuita con recursos limitados ([documentación](https://www.koyeb.com/docs/reference/instances)); la base PostgreSQL gratuita de Render tiene una duración limitada ([restricciones](https://render.com/docs/free)). Para este proyecto se eligió Render para la API y Neon para la base.
+
+El acceso a los datos utiliza `Npgsql.EntityFrameworkCore.PostgreSQL` y `UseNpgsql`. El script está adaptado a PostgreSQL: columnas identity, varchar, claves foráneas sin cascada y timestamp sin zona horaria. [Proveedor Npgsql](https://www.npgsql.org/efcore/).
+
+## Base de datos de Neon
+
+La creación del proyecto se realizó desde [Neon Console](https://console.neon.tech), utilizando solo PostgreSQL. En el SQL Editor de la base `neondb` se ejecutó [sql/restaurante.sql](../sql/restaurante.sql) y se comprobaron **4 mesas y 3 reservas**.
+
+Para consultar los conteos actuales se puede ejecutar:
 
 ```sql
-SELECT COUNT(*) FROM public."Mesas";    -- 4
-SELECT COUNT(*) FROM public."Reservas"; -- 3
+SELECT 'Mesas' AS tabla, COUNT(*) AS cantidad FROM public."Mesas"
+UNION ALL
+SELECT 'Reservas', COUNT(*) FROM public."Reservas";
 ```
 
-6. En **Connect**, obtener host, base, usuario y contraseña para la aplicación. No enviarlos al chat ni guardarlos en el repositorio.
+Los conteos iniciales pueden variar mientras se realizan pruebas. **No volver a ejecutar el script de creación sobre esta base**: las tablas ya existen. Para reproducir el esquema en otra base vacía, ejecutar el archivo completo una sola vez y comprobar que finaliza con COMMIT.
 
-## 2. Configurar conexión Npgsql
+## Configuración de Render
 
-La variable `ConnectionStrings__RestauranteDb` espera el formato ADO.NET/Npgsql de pares clave=valor, no una URL `postgresql://...`. En la ventana Connect, elegir C#/.NET si está disponible o trasladar por separado Host, Database, Username y Password a una conexión Npgsql con TLS verificado (`SSL Mode=VerifyFull`). El host debe ser exactamente el entregado por Neon; no agregar `https://` ni rutas. Si la contraseña contiene separadores, usar NpgsqlConnectionStringBuilder o el valor correctamente entrecomillado.
-
-Para Scaffold es preferible la conexión directa (sin `-pooler`). La API de este proyecto también puede utilizar esa conexión directa: no depende de un pooler externo. [Conexiones de Neon](https://neon.com/docs/connect/connect-from-any-app), [parámetros de Npgsql](https://www.npgsql.org/doc/connection-string-parameters.html).
-
-## 3. Publicar la API en Render
-
-1. Crear un **Web Service** vinculado a `Josue-Zapata-v/restaurante-api`, rama `main`.
-2. Runtime **Docker**, directorio raíz del repositorio y Dockerfile `./Dockerfile`.
-3. Elegir explícitamente **Free**.
-4. Configurar en el panel:
-
-| Clave | Valor |
+| Campo | Valor utilizado |
 |---|---|
-| `ConnectionStrings__RestauranteDb` | Conexión Npgsql de Neon, solo en el panel de secretos |
-| `Cors__AllowedOrigin` | Origen concreto, por ejemplo `http://localhost:5500` |
+| Repositorio | `Josue-Zapata-v/restaurante-api` |
+| Branch | `main` |
+| Language / runtime | `Docker` |
+| Root Directory | Vacío, para utilizar la raíz del repositorio. |
+| Dockerfile Path | `./Dockerfile` |
+| Instance Type | `Free` |
+| Puerto del contenedor | `8080` |
+| Health Check Path | `/api/Estado` |
+
+El repositorio también contiene [render.yaml](../render.yaml) para configurar un servicio mediante Blueprint. Para actualizar el servicio existente se utiliza la rama `main`; si no se inicia un despliegue automático tras el push, seleccionar **Manual Deploy → Deploy latest commit** en Render. Esperar a que aparezca **Live** antes de verificar la nueva versión.
+
+### Variables de entorno
+
+| Clave | Valor o finalidad |
+|---|---|
 | `ASPNETCORE_ENVIRONMENT` | `Production` |
+| `ConnectionStrings__RestauranteDb` | Conexión Npgsql de la base Neon; su valor es secreto y solo se guarda en el panel de Render. |
+| `Cors__AllowedOrigin` | `http://localhost:5500`, origen concreto autorizado para un cliente de desarrollo. No es la dirección pública de la API. |
 
-También puede usarse el Blueprint `render.yaml`; pide las variables secretas sin guardarlas en código. El contenedor escucha en 8080 y Render proporciona HTTPS externo. `/api/estado` es la comprobación de salud: 503 indica falta de conexión o de tablas; 200 confirma acceso al esquema.
+El valor de CORS documenta la configuración actual. No es necesario cambiarlo para ejecutar Swagger, que se aloja en el mismo origen HTTPS que la API. No se utiliza `AllowAnyOrigin`.
 
-Swagger usa un servidor relativo `/` para conservar el protocolo HTTPS del navegador. La API lee `RENDER_EXTERNAL_URL`, establecida automáticamente por Render, para generar también cabeceras Location con el origen HTTPS público. No hace falta añadir esa variable manualmente ni modificar CORS para usar Swagger.
+La conexión utiliza pares clave=valor en formato ADO.NET/Npgsql. Una URL `postgresql://...` no se pega directamente como valor de esta variable. Host, Database, Username y Password deben corresponder a la misma rama y al mismo rol de Neon. Se utiliza conexión directa, sin `-pooler`, y los parámetros **`SSL Mode=VerifyFull;GSS Encryption Mode=Disable`**.
 
-## 4. Verificar y entregar
+Las credenciales se consultan en **Neon → Connect** y se introducen únicamente en Render. Si la contraseña contiene separadores, se debe utilizar `NpgsqlConnectionStringBuilder` o entrecomillar correctamente el valor. No guardar la cadena real en Markdown, código, capturas o Git. [Parámetros de Npgsql](https://www.npgsql.org/doc/connection-string-parameters.html).
 
-1. Abrir `https://TU-API.onrender.com/swagger` y `/openapi/v1.json`.
-2. Verificar que `/api/estado` informa `PostgreSQL`.
-3. Ejecutar:
+Después de modificar una variable, utilizar **Save and deploy** o **Save, rebuild, and deploy**. **Save only** no aplica la nueva configuración al proceso que ya está ejecutándose. [Variables y secretos de Render](https://render.com/docs/configure-environment-variables).
+
+### HTTPS detrás del proxy
+
+Render recibe HTTPS y reenvía tráfico HTTP al contenedor. El documento OpenAPI declara un servidor relativo `/`, por lo que Swagger conserva el origen y el protocolo del navegador. La aplicación utiliza **`RENDER_EXTERNAL_URL`**, suministrada automáticamente por Render, para generar cabeceras Location con el origen HTTPS público. No es necesario crear esa variable manualmente. [Variables predeterminadas de Render](https://render.com/docs/environment-variables).
+
+## Verificación pública
+
+1. Abrir [estado de la API](https://restaurante-api-lohv.onrender.com/api/Estado). Debe responder 200 con `estado: Disponible` y `baseDeDatos: PostgreSQL`.
+2. Abrir [Swagger](https://restaurante-api-lohv.onrender.com/swagger) y ejecutar GET `/api/Mesas`. Request URL debe comenzar con `https://` y la respuesta debe ser 200.
+3. Seguir la [guía de pruebas](../pruebas/README.md) para el CRUD, filtros y errores de negocio.
+
+La matriz automatizada también puede ejecutarse desde la raíz del repositorio:
 
 ```powershell
-powershell -NoProfile -File pruebas/Probar-Api.ps1 -BaseUrl 'https://TU-API.onrender.com' -OutputPath 'evidencias/nube.json'
+powershell -NoProfile -File pruebas/Probar-Api.ps1 -BaseUrl 'https://restaurante-api-lohv.onrender.com' -OutputPath 'evidencias/nube.json'
 ```
 
-4. Repetir las operaciones en Swagger para las capturas exigidas y verificar que los cambios persisten en Neon.
-5. Completar `docs/ENTREGA.md` con la URL real, evidencias y observaciones.
+El script crea y elimina registros temporales. El reporte complementa las capturas de Swagger que se adjuntan al informe; no las sustituye. Las comprobaciones realizadas se documentan en [VERIFICACION.md](VERIFICACION.md).
 
-El primer acceso puede tardar por el arranque de la API y la reactivación de la base. La publicación y las capturas de nube solo se consideran completas después de comprobarse en la URL real.
+## Errores encontrados y solución aplicada
+
+| Mensaje o síntoma | Causa y solución |
+|---|---|
+| `Couldn't set ssl mode`, valor `VerifyFul` | Error de escritura en la conexión. El valor correcto es **VerifyFull**, con dos letras l al final. |
+| `28P01: password authentication failed` | Contraseña o combinación de host y rol incorrecta. Copiar la contraseña real desde Connect y comprobar los datos de la misma rama. |
+| `Cannot load library libgssapi_krb5.so.2` | Intento opcional de usar GSSAPI en Npgsql 10. Se desactiva con `GSS Encryption Mode=Disable`, conservando TLS con `SSL Mode=VerifyFull`. [Referencia](https://www.npgsql.org/doc/release-notes/10.0.html). |
+| Swagger muestra `Failed to fetch` y Request URL usa HTTP | Se corrigió OpenAPI para usar `/` y conservar HTTPS. Tras un nuevo despliegue, recargar Swagger con **Ctrl + Shift + R**. |
+| `/api/Estado` devuelve 503 | Comprobar logs, conexión y existencia de las tablas en la base seleccionada. No repetir el script de creación si las tablas ya existen. |
+
+El mensaje `Application is shutting down` durante un reemplazo de versión no determina por sí solo el resultado: comprobar el despliegue actual y las respuestas de los endpoints públicos.

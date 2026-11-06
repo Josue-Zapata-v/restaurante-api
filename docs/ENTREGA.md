@@ -6,14 +6,19 @@ La API centraliza la administración de mesas y reservas de un restaurante. Perm
 
 Reglas con respuesta 409: número de mesa único; prohibición de eliminar mesas con reservas; cantidad de personas no superior a la capacidad; prohibición de reducir la capacidad por debajo de una reserva asociada.
 
-## Enlaces reales (completar después de publicar)
+## Enlaces y proveedores de la publicación
 
 - Repositorio: https://github.com/Josue-Zapata-v/restaurante-api
-- Swagger público: **PENDIENTE**.
-- Hosting elegido: **Render Free**.
-- Base de datos elegida: **Neon Free (PostgreSQL)**.
-- Ejecución del script en Neon: **PENDIENTE**.
-- Pruebas y capturas contra la API pública: **PENDIENTES**.
+- Swagger público: https://restaurante-api-lohv.onrender.com/swagger
+- Documento OpenAPI: https://restaurante-api-lohv.onrender.com/openapi/v1.json
+- Estado de API y base de datos: https://restaurante-api-lohv.onrender.com/api/Estado
+- Hosting: **Render Free**, API ASP.NET Core .NET 10 desplegada mediante Docker.
+- Base de datos: **Neon Free (PostgreSQL)**, proyecto `restaurante-api`, rama `production` y base `neondb`.
+- Script ejecutado en Neon: [restaurante.sql](../sql/restaurante.sql), con las tablas y los datos iniciales confirmados (4 mesas y 3 reservas).
+- Guía para evaluar los endpoints: [pruebas en Swagger](../pruebas/README.md).
+- Registro de comprobaciones realizadas: [verificación del proyecto](VERIFICACION.md).
+
+La API y la base de datos están alojadas en la nube. Las credenciales se configuran como variables de entorno en Render y no se incluyen en el repositorio.
 
 ## Matriz de capturas
 
@@ -46,18 +51,19 @@ Cada imagen debe mostrar método, URL HTTPS pública, cuerpo enviado si correspo
 | 23 | GET ruta anidada de mesa inexistente | 404 |
 | 24 | GET estado de la API y base de nube | 200 |
 
-Cuando una fila agrupa varias solicitudes, tomar una captura por solicitud. Guardar las imágenes en `evidencias/` con nombres descriptivos. El archivo JSON del script de pruebas complementa las capturas, no las sustituye.
+Cuando una fila agrupa varias solicitudes, tomar una captura por solicitud. Las imágenes se adjuntan al informe de evaluación. Pueden organizarse localmente en `evidencias/`, carpeta excluida de Git. El archivo JSON del script de pruebas complementa las capturas, no las sustituye. La guía de pruebas incluye los cuerpos y el orden de ejecución para reproducir los casos.
 
 ## Observaciones
 
-- La API implementa controladores async con acceso directo al DbContext y consultas LINQ.
-- El modelo se genera desde una base PostgreSQL creada por script, luego se incorporan validaciones y ajustes de serialización.
-- Las claves foráneas y restricciones únicas en la base complementan las comprobaciones de los controladores.
-- Las fechas corresponden a la hora local de Lima. No se implementa detección de solapamiento de reservas.
-- Anotar aquí las limitaciones observadas de los servicios gratuitos durante las pruebas públicas: **PENDIENTE**.
+1. Observamos que la relación uno a muchos entre mesas y reservas permite organizar la información del restaurante sin duplicar los datos de cada mesa.
+2. Notamos que las validaciones y reglas de negocio evitan registrar datos incorrectos, repetir números de mesa y crear reservas que superen la capacidad disponible.
 
-## Conclusiones técnicas
+## Conclusiones
 
-La relación 1:N permite administrar las reservas sin duplicar los datos de las mesas. Las Data Annotations y los códigos HTTP expresan los errores de validación y los conflictos de negocio de forma consistente. Se utiliza PostgreSQL mediante el proveedor Npgsql de EF Core y el método UseNpgsql. El script usa columnas identity, texto varchar, claves foráneas sin cascada y timestamp sin zona horaria. La elección del proveedor permite usar Neon Free para la persistencia en la nube. Swagger permite explorar el contrato y realizar pruebas sin construir un frontend.
+1. Aprendimos a desarrollar una API REST con ASP.NET Core y Entity Framework Core, utilizando consultas LINQ y operaciones asíncronas para administrar mesas y reservas.
+2. Comprendimos la importancia de utilizar códigos de respuesta HTTP adecuados y Swagger para documentar y comprobar el funcionamiento de los endpoints.
+3. Logramos publicar la API en Render y la base de datos PostgreSQL en Neon, manteniendo la conexión fuera del repositorio mediante variables de entorno.
 
-La conclusión sobre el funcionamiento en internet se completará cuando se verifiquen la API publicada y la persistencia en Neon; no debe afirmarse como realizada antes de esa comprobación.
+## Notas técnicas
+
+Se utiliza PostgreSQL mediante el proveedor `Npgsql.EntityFrameworkCore.PostgreSQL` y el método `UseNpgsql`. El script usa columnas identity, texto varchar, claves foráneas sin cascada y timestamp sin zona horaria. El modelo se genera con Scaffold desde la base creada por script y después se incorporan las Data Annotations y los ajustes de serialización. Las fechas se interpretan en hora local de Lima. El alcance no incluye detección de solapamiento de reservas.
