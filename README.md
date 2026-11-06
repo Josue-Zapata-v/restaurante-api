@@ -13,7 +13,7 @@ API REST para gestionar mesas y reservas de un restaurante, desarrollada con **A
 | Listado de reservas | https://restaurante-api-lohv.onrender.com/api/Reservas |
 | Repositorio | https://github.com/Josue-Zapata-v/restaurante-api |
 
-**Para evaluar el proyecto, abrir Swagger y seguir la [guía de pruebas para el profesor](pruebas/README.md).** No es necesario instalar .NET, Docker ni una base de datos en el equipo para utilizar la API pública. En el plan gratuito, el primer acceso puede demorar mientras se reactiva el servicio.
+**Para evaluar el proyecto, abrir Swagger y seguir la [guía de pruebas](pruebas/README.md).** No es necesario instalar .NET, Docker ni una base de datos en el equipo para utilizar la API pública. En el plan gratuito, el primer acceso puede demorar mientras se reactiva el servicio.
 
 La URL base es `https://restaurante-api-lohv.onrender.com`. La interfaz del proyecto se encuentra en `/swagger`.
 
@@ -72,7 +72,7 @@ La ruta anidada devuelve **404** si la mesa no existe y **200** con `[]` si exis
 
 ## Pruebas sobre la API en la nube
 
-- **[Guía manual para el profesor](pruebas/README.md):** contiene las 22 pruebas en orden, sus cuerpos, códigos esperados y eliminación de los registros temporales.
+- **[Guía de pruebas](pruebas/README.md):** contiene las 22 pruebas en orden, sus cuerpos, códigos esperados y eliminación de los registros temporales.
 - **[Archivo de solicitudes HTTP](pruebas/restaurante.http):** preparado con la URL pública para la extensión REST Client de VS Code.
 - **[Script de pruebas](pruebas/Probar-Api.ps1):** verifica el proveedor PostgreSQL, CRUD, filtros, Location, persistencia, validaciones y CORS.
 
@@ -110,7 +110,7 @@ Las instrucciones para ejecutar el proyecto en un equipo y regenerar el modelo s
 
 | Documento | Contenido |
 |---|---|
-| [Pruebas para el profesor](pruebas/README.md) | Solicitudes y resultados esperados en Swagger público. |
+| [Guía de pruebas](pruebas/README.md) | Solicitudes y resultados esperados en Swagger público. |
 | [Despliegue y mantenimiento](docs/DESPLIEGUE.md) | Render, Neon, variables de entorno y resolución de errores. |
 | [Entrega](docs/ENTREGA.md) | Tema, enlaces, matriz de evidencias, observaciones y conclusiones. |
 | [Verificación del proyecto](docs/VERIFICACION.md) | Comprobaciones de la API pública e historial de pruebas locales. |
