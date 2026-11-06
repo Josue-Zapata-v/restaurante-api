@@ -66,6 +66,12 @@ try {
     if (!$openapi.Data.paths.'/api/Mesas' -and !$openapi.Data.paths.'/api/mesas') {
         throw 'El documento OpenAPI no contiene el controlador Mesas.'
     }
+    foreach ($server in $openapi.Data.servers) {
+        $resolvedServer = New-Object Uri($apiUri, [string]$server.url)
+        if ($resolvedServer.Scheme -ne $apiUri.Scheme -or $resolvedServer.Authority -ne $apiUri.Authority) {
+            throw 'Swagger debe usar el mismo origen y protocolo que la API; revisa servers en OpenAPI.'
+        }
+    }
     $mesas = Invoke-Case 'Listar mesas' GET '/api/mesas' 200
     $used = @($mesas.Data | ForEach-Object { $_.numero })
     $available = @(1..200 | Where-Object { $_ -notin $used } | Select-Object -First 2)

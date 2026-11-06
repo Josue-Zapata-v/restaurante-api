@@ -46,6 +46,8 @@ Para Scaffold es preferible la conexión directa (sin `-pooler`). La API de este
 
 También puede usarse el Blueprint `render.yaml`; pide las variables secretas sin guardarlas en código. El contenedor escucha en 8080 y Render proporciona HTTPS externo. `/api/estado` es la comprobación de salud: 503 indica falta de conexión o de tablas; 200 confirma acceso al esquema.
 
+Swagger usa un servidor relativo `/` para conservar el protocolo HTTPS del navegador. La API lee `RENDER_EXTERNAL_URL`, establecida automáticamente por Render, para generar también cabeceras Location con el origen HTTPS público. No hace falta añadir esa variable manualmente ni modificar CORS para usar Swagger.
+
 ## 4. Verificar y entregar
 
 1. Abrir `https://TU-API.onrender.com/swagger` y `/openapi/v1.json`.
