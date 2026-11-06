@@ -71,7 +71,7 @@ La ruta anidada devuelve 404 si la mesa no existe y 200 con una lista vacía si 
 
 ## Pruebas
 
-Para evaluar la API publicada desde Swagger, consultar la **[guía de pruebas para el profesor](pruebas/README.md)**. Incluye las solicitudes en orden, sus cuerpos, los códigos esperados y la limpieza de los registros creados.
+Para evaluar la API publicada desde Swagger, consultar la **[guía de pruebas](pruebas/README.md)**. Incluye las solicitudes en orden, sus cuerpos, los códigos esperados y la limpieza de los registros creados.
 
 ```powershell
 powershell -NoProfile -File pruebas/Probar-Api.ps1 -BaseUrl 'http://localhost:5054' -OutputPath 'evidencias/local.json'
